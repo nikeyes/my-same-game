@@ -1,8 +1,8 @@
 let gameOptions = {
     gemSize: 80, 
     boardSize: {
-        rows: 5,
-        cols: 12
+        rows: 12,
+        cols: 7
     },
     boardOffset: {
         x: 80,
@@ -15,8 +15,8 @@ let gameOptions = {
 window.onload = function() {
     let gameConfig = {
         type: Phaser.AUTO,
-        width: 800,
-        height: 600,
+        width: 750,
+        height: 1300,
         backgroundColor: 0x222222,
         scene: gemGame
     }
