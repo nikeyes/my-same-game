@@ -1,15 +1,22 @@
+/**
+ * Based on:
+ * https://www.emanueleferonato.com/2016/10/10/html5-samegame-engine-powered-by-phaser-adding-animations/
+ * https://www.emanueleferonato.com/2016/10/05/html5-samegame-engine-powered-by-phaser/
+ * https://www.emanueleferonato.com/2019/01/14/complete-html5-samegame-game-for-you-to-play-and-download-featuring-no-more-moves-check-powered-by-phaser-3-and-pure-javascript-samegame-class/
+*/
+const MIN_GEMS_TO_DESTROY = 1;
 let gameOptions = {
     gemSize: 80, 
     boardSize: {
-        rows: 13,
+        rows: 14,
         cols: 7
     },
     boardOffset: {
-        x: 80,
-        y: 60
+        x: 95,
+        y: 65
     },
     numDifferentGems: 4,
-    minToDestroy: 2
+    minToDestroy: MIN_GEMS_TO_DESTROY
 };
 
 window.onload = function() {
@@ -66,21 +73,24 @@ class gemGame extends Phaser.Scene{
         this.scoreText = this.add.bitmapText(20, 20, "font", "ccc", 20);
         this.updateScore(0);
         
-        this.gameText = this.add.bitmapText(game.config.width / 2, game.config.height - 60, "font", "GAEL, MARTI Y EVA", 30).setOrigin(0.5, 0.5);
         
-        this.resetText = this.add.bitmapText(game.config.width - 50, 30, "font", "RESET", 20).setOrigin(0.5, 0.5);
+        this.resetText = this.add.bitmapText(game.config.width - 65, 30, "font", "RESET", 20).setOrigin(0.5, 0.5);
         this.resetText.setInteractive().on('pointerdown', () => {
-            gameOptions.minToDestroy = 2;
+            gameOptions.minToDestroy = MIN_GEMS_TO_DESTROY;
             this.scene.restart();
         });
 
-        this.clickButton = this.add.text(this, 30, 30, 'Click me!', { fill: '#0f0'});
-
-        this.gemsText = this.add.bitmapText(game.config.width / 2, game.config.height - 30, "font", "NUM. GEMAS JUNTAS: " + gameOptions.minToDestroy, 20).setOrigin(0.5, 0.5);
+        this.gemsText = this.add.bitmapText(game.config.width / 2, game.config.height - 60, "font", "CLICK PARA MAS DIFICIL - JUNTAR GEMAS: " + gameOptions.minToDestroy, 20).setOrigin(0.5, 0.5);
         this.gemsText.setInteractive().on('pointerdown', () => {
             gameOptions.minToDestroy += 1
-            this.gemsText.text = "NUM. GEMAS JUNTAS: " + gameOptions.minToDestroy;
+            this.gemsText.text = "CLICK PARA MAS DIFICIL - JUNTAR GEMAS: " + gameOptions.minToDestroy;
         });
+
+        this.gameText = this.add.bitmapText(game.config.width / 2, game.config.height - 30, "font", "PARA GAEL, MARTI Y EVA", 15).setOrigin(0.5, 0.5);
+
+        this.winGameText = this.add.bitmapText(game.config.width / 2, game.config.height / 2, "font", "", 60).setOrigin(0.5, 0.5);
+        this.gameOverText = this.add.bitmapText(game.config.width / 2, game.config.height / 2, "font", "", 30).setOrigin(0.5, 0.5);
+        
     }
 
     generateBoard(){
@@ -120,19 +130,20 @@ class gemGame extends Phaser.Scene{
             this.colorToLookFor = this.board[row][col].value;
             this.floodFillArray = [];
             this.floodFill(row, col);
-            if(this.floodFillArray.length >= gameOptions.minToDestroy){
+            let numGemasConectadas = this.floodFillArray.length
+            if(numGemasConectadas >= gameOptions.minToDestroy){
                 this.destroyTiles(this.floodFillArray);
                 this.fillVerticalHoles();
                 this.fillHorizontalHoles();
-                this.updateScore(1);
+                this.updateScore(numGemasConectadas * numGemasConectadas);
                 this.endOfMove();
             }
         }
    }
 
    clickOnGem(row,col){
-    return row >= 0 && row <= gameOptions.boardSize.rows 
-            && col >= 0 && col <= gameOptions.boardSize.cols;
+    return row >= 0 && row < gameOptions.boardSize.rows 
+            && col >= 0 && col < gameOptions.boardSize.cols;
    }
 
     // flood fill routine
@@ -252,11 +263,11 @@ class gemGame extends Phaser.Scene{
 
             if(this.numGemsInBoard() == 0){
                 //this.gameText.setTint("#188208");
-                this.gameText.text = "FELICIDADES!!";
+                this.winGameText.text = "FELICIDADES!!";
             }
             else{
                 //this.gameText.setTint("#cc1414"); 
-                this.gameText.text = "NO HAY MÁS MOVIMIENTOS!!!";
+                this.gameOverText.text = "NO HAY MAS MOVIMIENTOS!!!";
             }
         }
     }
