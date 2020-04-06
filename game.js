@@ -1,7 +1,7 @@
 let gameOptions = {
     gemSize: 80, 
     boardSize: {
-        rows: 12,
+        rows: 13,
         cols: 7
     },
     boardOffset: {
@@ -9,7 +9,7 @@ let gameOptions = {
         y: 60
     },
     numDifferentGems: 4,
-    minToDestroy: 1
+    minToDestroy: 2
 };
 
 window.onload = function() {
@@ -65,7 +65,22 @@ class gemGame extends Phaser.Scene{
         this.score = 0;
         this.scoreText = this.add.bitmapText(20, 20, "font", "ccc", 20);
         this.updateScore(0);
-        this.gameText = this.add.bitmapText(game.config.width / 2, game.config.height - 60, "font", "GAEL Y MARTI", 30).setOrigin(0.5, 0.5);
+        
+        this.gameText = this.add.bitmapText(game.config.width / 2, game.config.height - 60, "font", "GAEL, MARTI Y EVA", 30).setOrigin(0.5, 0.5);
+        
+        this.resetText = this.add.bitmapText(game.config.width - 50, 30, "font", "RESET", 20).setOrigin(0.5, 0.5);
+        this.resetText.setInteractive().on('pointerdown', () => {
+            gameOptions.minToDestroy = 2;
+            this.scene.restart();
+        });
+
+        this.clickButton = this.add.text(this, 30, 30, 'Click me!', { fill: '#0f0'});
+
+        this.gemsText = this.add.bitmapText(game.config.width / 2, game.config.height - 30, "font", "NUM. GEMAS JUNTAS: " + gameOptions.minToDestroy, 20).setOrigin(0.5, 0.5);
+        this.gemsText.setInteractive().on('pointerdown', () => {
+            gameOptions.minToDestroy += 1
+            this.gemsText.text = "NUM. GEMAS JUNTAS: " + gameOptions.minToDestroy;
+        });
     }
 
     generateBoard(){
@@ -100,7 +115,8 @@ class gemGame extends Phaser.Scene{
     gemSelect(pointer){
         let row = Math.floor((pointer.y - gameOptions.boardOffset.y) / gameOptions.gemSize);
         let col = Math.floor((pointer.x - gameOptions.boardOffset.x) / gameOptions.gemSize);
-        if (this.board[row][col] != null) { 
+
+        if (this.clickOnGem(row, col) && this.board[row][col] != null) { 
             this.colorToLookFor = this.board[row][col].value;
             this.floodFillArray = [];
             this.floodFill(row, col);
@@ -114,10 +130,15 @@ class gemGame extends Phaser.Scene{
         }
    }
 
+   clickOnGem(row,col){
+    return row >= 0 && row <= gameOptions.boardSize.rows 
+            && col >= 0 && col <= gameOptions.boardSize.cols;
+   }
+
     // flood fill routine
     // http://www.emanueleferonato.com/2008/06/06/flash-flood-fill-implementation/
     floodFill(row, column){
-        if(!this.validPick(row, column) || this.isEmpty(row, column)){
+        if(!this.validPick(row, column) || this.isPositionEmpty(row, column)){
             return;
         }
         if(this.board[row][column].value == this.colorToLookFor && !this.alreadyVisited(row, column)){
@@ -200,7 +221,7 @@ class gemGame extends Phaser.Scene{
         return row >= 0 && row < gameOptions.boardSize.rows && column >= 0 && column < gameOptions.boardSize.cols && this.board[row] != undefined && this.board[row][column] != undefined;
     }
 
-    isEmpty(row, column){
+    isPositionEmpty(row, column){
         return  this.board[row][column] === null;// || this.board[row][column].isEmpty;
     }
 
@@ -220,7 +241,7 @@ class gemGame extends Phaser.Scene{
     }
 
     endOfMove(){
-        if(!this.stillPlayable(gameOptions.minToDestroy)){
+        if(!this.thereIsMovements(gameOptions.minToDestroy)){
             /*let timedEvent =  this.time.addEvent({
                 delay: 7000,
                 callbackScope: this,
@@ -229,20 +250,23 @@ class gemGame extends Phaser.Scene{
                 }
             });*/
 
-            if(this.nonEmptyItems() == 0){
-                this.gameText.text = "Congratulations!!";
+            if(this.numGemsInBoard() == 0){
+                //this.gameText.setTint("#188208");
+                this.gameText.text = "FELICIDADES!!";
             }
             else{
-                this.gameText.text = "No more moves!!!";
+                //this.gameText.setTint("#cc1414"); 
+                this.gameText.text = "NO HAY MÁS MOVIMIENTOS!!!";
             }
         }
     }
 
-    stillPlayable(minCombo){
+    thereIsMovements(minCombo){
         for(let row = 0; row < gameOptions.boardSize.rows; row ++){
             for(let col = 0; col < gameOptions.boardSize.cols; col ++){
-                if(!this.isEmpty(row, col))
+                if(!this.isPositionEmpty(row, col))
                 {
+                    this.colorToLookFor = this.board[row][col].value;
                     this.floodFillArray = [];
                     this.floodFill(row, col); 
                     if(this.floodFillArray.length >= minCombo){
@@ -254,11 +278,11 @@ class gemGame extends Phaser.Scene{
         return false;
     }
 
-    nonEmptyItems(){
+    numGemsInBoard(){
         let result = 0;
-        for(let i = 0; i < this.board.rows; i ++){
-            for(let j = 0; j < this.board.cols; j ++){
-                if(!this.isEmpty(i, j) ){
+        for(let row = 0; row < gameOptions.boardSize.rows; row ++){
+            for(let col = 0; col < gameOptions.boardSize.cols; col ++){
+                if(!this.isPositionEmpty(row, col) ){
                     result ++;
                 }
             }
